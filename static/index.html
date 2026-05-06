@@ -3,193 +3,817 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Network Ping Sweeper</title>
+  <title>NetSweep Pro — Network Ping Sweeper</title>
   <style>
+    /* ── Variables ─────────────────────────────────────────── */
     :root {
-      --bg: #0b0f14;
-      --panel: #111827;
-      --accent: #22c55e;
-      --accent-soft: rgba(34, 197, 94, 0.2);
-      --text: #e5e7eb;
-      --muted: #9ca3af;
+      --bg:           #080c14;
+      --surface:      #0f172a;
+      --panel:        #111827;
+      --border:       rgba(34,197,94,.22);
+      --accent:       #22c55e;
+      --accent-soft:  rgba(34,197,94,.12);
+      --accent-hover: rgba(34,197,94,.22);
+      --blue:         #3b82f6;
+      --blue-soft:    rgba(59,130,246,.15);
+      --orange:       #f59e0b;
+      --orange-soft:  rgba(245,158,11,.15);
+      --red:          #ef4444;
+      --red-soft:     rgba(239,68,68,.15);
+      --text:         #e2e8f0;
+      --muted:        #64748b;
+      --subtle:       #1e293b;
+      --r:            10px;
+      --r-sm:         6px;
     }
 
+    /* ── Reset / Base ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: "Fira Code", "Consolas", monospace;
+      font-family: "Inter", "Segoe UI", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      margin: 0;
-      padding: 24px;
-    }
-
-    .container {
-      max-width: 880px;
-      margin: 0 auto;
-      background: var(--panel);
-      border: 1px solid var(--accent);
-      box-shadow: 0 0 20px var(--accent-soft);
-      border-radius: 12px;
-      padding: 24px;
-    }
-
-    h1 {
-      margin-top: 0;
-      color: var(--accent);
-      font-size: 24px;
-    }
-
-    p {
-      color: var(--muted);
-    }
-
-    .input-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin: 18px 0;
-    }
-
-    input {
-      flex: 1;
-      min-width: 220px;
-      background: #0f172a;
-      color: var(--text);
-      border: 1px solid var(--accent);
-      padding: 12px;
-      border-radius: 8px;
-    }
-
-    button {
-      background: var(--accent);
-      color: #0b0f14;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button:hover {
-      filter: brightness(1.05);
-    }
-
-    .status {
-      margin: 12px 0 0;
-      color: var(--muted);
-    }
-
-    table {
-      width: 100%;
-      margin-top: 16px;
-      border-collapse: collapse;
+      min-height: 100vh;
       font-size: 14px;
+      line-height: 1.5;
     }
 
-    th, td {
-      border-bottom: 1px solid rgba(34, 197, 94, 0.2);
-      padding: 10px;
-      text-align: left;
+    /* ── App Header ─────────────────────────────────────────── */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-
-    .badge {
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-weight: 700;
-      display: inline-block;
+    .header-icon {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      flex-shrink: 0;
     }
-
-    .up {
-      background: rgba(34, 197, 94, 0.2);
+    .header-title {
+      font-size: 19px;
+      font-weight: 800;
       color: var(--accent);
+      letter-spacing: -.5px;
     }
-
-    .down {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-    }
-
-    .note {
+    .header-sub {
       font-size: 12px;
       color: var(--muted);
-      margin-top: 12px;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .main { max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── Cards ──────────────────────────────────────────────── */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px 22px;
+      margin-bottom: 18px;
+    }
+    .card-heading {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-heading::before {
+      content: '';
+      display: block;
+      width: 3px; height: 14px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Form helpers ───────────────────────────────────────── */
+    label.field-label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input[type="text"] {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--subtle);
+      padding: 10px 14px;
+      border-radius: var(--r-sm);
+      font-size: 14px;
+      width: 100%;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Scan-config grid ───────────────────────────────────── */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .network-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .network-row input { flex: 1; }
+
+    /* ── Mode buttons ───────────────────────────────────────── */
+    .mode-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mode-btn {
+      padding: 8px 16px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--subtle);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .mode-btn:hover { border-color: var(--accent); color: var(--text); }
+    .mode-btn.active[data-mode="icmp"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .mode-btn.active[data-mode="tcp"]  { background: var(--blue-soft);   border-color: var(--blue);   color: var(--blue);   }
+    .mode-btn.active[data-mode="udp"]  { background: var(--orange-soft); border-color: var(--orange); color: var(--orange); }
+    .mode-hint { font-size: 12px; color: var(--muted); margin-top: 7px; }
+
+    /* ── Toggle switch ──────────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      width: fit-content;
+    }
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle input { display: none; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--subtle);
+      border-radius: 999px;
+      transition: background .2s;
+    }
+    .toggle input:checked ~ .toggle-track { background: var(--accent); }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+    }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+    .toggle-label { font-size: 14px; color: var(--text); user-select: none; }
+
+    /* ── Port config panel ──────────────────────────────────── */
+    .port-config {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--subtle);
+    }
+    .port-tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .port-tag {
+      padding: 3px 10px;
+      background: var(--surface);
+      border: 1px solid var(--subtle);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── Primary / secondary buttons ────────────────────────── */
+    .btn-primary {
+      background: var(--accent);
+      color: #030712;
+      border: none;
+      padding: 10px 22px;
+      border-radius: var(--r-sm);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: filter .18s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    .btn-filter {
+      padding: 6px 14px;
+      border-radius: var(--r-sm);
+      border: 1px solid var(--subtle);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-filter:hover { border-color: var(--accent); color: var(--text); }
+    .btn-filter.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+    /* ── Status bar ─────────────────────────────────────────── */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      margin-bottom: 14px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .status-dot.scanning { background: var(--accent); animation: pulse 1s infinite; }
+    .status-dot.done     { background: var(--accent); }
+    .status-dot.error    { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.25} }
+
+    /* ── Progress bar ───────────────────────────────────────── */
+    .progress-wrap {
+      height: 3px; background: var(--subtle);
+      border-radius: 999px; margin-bottom: 16px; overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%; background: var(--accent);
+      border-radius: 999px; width: 0; transition: width .3s;
+    }
+    .progress-bar.indeterminate {
+      width: 35%; animation: slide 1.1s infinite ease-in-out;
+    }
+    @keyframes slide { 0%{transform:translateX(-120%)} 100%{transform:translateX(380%)} }
+
+    /* ── Stats cards ─────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 12px 16px;
+    }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; }
+    .stat-value { font-size: 22px; font-weight: 800; color: var(--text); margin-top: 4px; }
+    .stat-value.up   { color: var(--accent); }
+    .stat-value.down { color: var(--red); }
+
+    /* ── Filter row ─────────────────────────────────────────── */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .filter-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-right: 2px; }
+
+    /* ── Table ──────────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: var(--surface); }
+    th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      vertical-align: middle;
+    }
+    tbody tr { cursor: pointer; transition: background .12s; }
+    tbody tr:hover { background: rgba(34,197,94,.07); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── Badges ─────────────────────────────────────────────── */
+    .badge {
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+      letter-spacing: .4px;
+    }
+    .b-up   { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(34,197,94,.3); }
+    .b-down { background: var(--red-soft);    color: #f87171;        border: 1px solid rgba(239,68,68,.3); }
+    .b-icmp { background: var(--accent-soft); color: var(--accent); }
+    .b-tcp  { background: var(--blue-soft);   color: var(--blue);   }
+    .b-udp  { background: var(--orange-soft); color: var(--orange); }
+    .b-port {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--subtle);
+      font-size: 10px;
+      padding: 2px 7px;
+    }
+
+    .port-chip-row { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    /* ── Modal overlay ──────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(5px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.hidden { display: none; }
+
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%; max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,.65);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: var(--panel);
+      z-index: 1;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      background: var(--surface);
+      border: 1px solid var(--subtle);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: grid; place-items: center;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 22px; }
+
+    /* ── Detail grid ────────────────────────────────────────── */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .detail-cell {
+      background: var(--surface);
+      border: 1px solid var(--subtle);
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+    }
+    .detail-cell-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; margin-bottom: 5px; }
+    .detail-cell-val   { font-size: 15px; font-weight: 700; word-break: break-all; }
+
+    /* ── Port rows in modal ─────────────────────────────────── */
+    .ports-heading { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .9px; font-weight: 700; margin-bottom: 10px; }
+    .port-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px;
+      background: var(--surface);
+      border: 1px solid var(--subtle);
+      border-radius: var(--r-sm);
+      margin-bottom: 7px;
+    }
+    .port-num  { font-size: 14px; font-weight: 800; color: var(--accent); font-family: monospace; }
+    .port-svc  { font-size: 13px; color: var(--text); }
+    .port-open { font-size: 11px; padding: 2px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+
+    /* ── Utility ─────────────────────────────────────────────── */
+    .mono { font-family: "Fira Code", "Consolas", monospace; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 600px) {
+      .detail-grid { grid-template-columns: 1fr; }
+      .app-header  { padding: 12px 16px; }
+      .main        { padding: 14px 12px 40px; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>&gt; Network Ping Sweeper</h1>
-    <p>Enter a CIDR network to sweep (e.g., <code>192.168.1.0/24</code>).</p>
 
-    <div class="input-row">
-      <input id="networkInput" placeholder="192.168.1.0/24" />
-      <button onclick="startSweep()">Start Sweep</button>
+<!-- ── Header ──────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="header-icon">⚡</div>
+  <div>
+    <div class="header-title">NetSweep Pro</div>
+    <div class="header-sub">Advanced Network Ping Sweeper</div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- ── Scan Configuration ────────────────────────────────── -->
+  <div class="card">
+    <p class="card-heading">Scan Configuration</p>
+    <div class="config-grid">
+
+      <!-- Network + Start -->
+      <div>
+        <label class="field-label" for="networkInput">Target Network (CIDR)</label>
+        <div class="network-row">
+          <input type="text" id="networkInput" placeholder="e.g. 192.168.1.0/24  or  1.1.1.1/32" />
+          <button class="btn-primary" id="startBtn" onclick="startSweep()">▶ Start Sweep</button>
+        </div>
+      </div>
+
+      <!-- Scan Mode -->
+      <div>
+        <label class="field-label">Scan Mode</label>
+        <div class="mode-group">
+          <button class="mode-btn active" data-mode="icmp" onclick="setMode('icmp')">🔵 ICMP Ping</button>
+          <button class="mode-btn"        data-mode="tcp"  onclick="setMode('tcp')" >🟦 TCP Ping</button>
+          <button class="mode-btn"        data-mode="udp"  onclick="setMode('udp')" >🟧 UDP Probe</button>
+        </div>
+        <p class="mode-hint" id="modeHint">ICMP: Classic ping — fast and reliable on most networks.</p>
+      </div>
+
+      <!-- Port Scan toggle -->
+      <div>
+        <label class="toggle-row" for="portToggle">
+          <div class="toggle">
+            <input type="checkbox" id="portToggle" onchange="togglePortConfig()" />
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </div>
+          <span class="toggle-label">Enable Port Scan</span>
+        </label>
+
+        <div class="port-config hidden" id="portConfig">
+          <label class="field-label" style="margin-top:12px;">Custom Ports (optional)</label>
+          <input type="text" id="portInput" placeholder="Leave blank for defaults — or enter: 22,80,443,8080,3306" />
+          <p style="font-size:11px; color:var(--muted); margin-top:10px; margin-bottom:6px;">Default ports scanned:</p>
+          <div class="port-tag-row">
+            <span class="port-tag">21 FTP</span><span class="port-tag">22 SSH</span>
+            <span class="port-tag">23 Telnet</span><span class="port-tag">25 SMTP</span>
+            <span class="port-tag">53 DNS</span><span class="port-tag">80 HTTP</span>
+            <span class="port-tag">110 POP3</span><span class="port-tag">143 IMAP</span>
+            <span class="port-tag">443 HTTPS</span><span class="port-tag">445 SMB</span>
+            <span class="port-tag">3306 MySQL</span><span class="port-tag">3389 RDP</span>
+            <span class="port-tag">5432 PostgreSQL</span><span class="port-tag">8080 HTTP-Alt</span>
+            <span class="port-tag">8443 HTTPS-Alt</span>
+          </div>
+        </div>
+      </div>
+
     </div>
-
-    <p class="status" id="status">Waiting for input.</p>
-
-    <table id="resultsTable" style="display:none;">
-      <thead>
-        <tr>
-          <th>IP Address</th>
-          <th>Hostname</th>
-          <th>Status</th>
-          <th>Latency (ms)</th>
-        </tr>
-      </thead>
-      <tbody id="resultsBody"></tbody>
-    </table>
-
-    <p class="note">Tip: ICMP may be blocked by firewalls. Try smaller ranges for faster demo results.</p>
   </div>
 
-  <script>
-    async function startSweep() {
-      const network = document.getElementById('networkInput').value.trim();
-      const statusText = document.getElementById('status');
-      const table = document.getElementById('resultsTable');
-      const tbody = document.getElementById('resultsBody');
+  <!-- ── Status / Progress ──────────────────────────────────── -->
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Ready. Enter a network above and click Start Sweep.</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
 
-      if (!network) {
-        alert('Please enter a network in CIDR format.');
+  <!-- ── Stats + Filters (hidden until scan completes) ─────── -->
+  <div id="postScan" class="hidden">
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Hosts</div><div class="stat-value" id="sTotal">0</div></div>
+      <div class="stat-card"><div class="stat-label">Online</div><div class="stat-value up" id="sUp">0</div></div>
+      <div class="stat-card"><div class="stat-label">Offline</div><div class="stat-value down" id="sDown">0</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Latency</div><div class="stat-value" id="sAvg">—</div></div>
+      <div class="stat-card"><div class="stat-label">Open Ports</div><div class="stat-value" id="sPorts">—</div></div>
+    </div>
+
+    <div class="filter-row">
+      <span class="filter-label">Filter:</span>
+      <button class="btn-filter active" data-filter="all"   onclick="setFilter('all')"  >All</button>
+      <button class="btn-filter"        data-filter="up"    onclick="setFilter('up')"   >🟢 Up Only</button>
+      <button class="btn-filter"        data-filter="down"  onclick="setFilter('down')" >🔴 Down Only</button>
+      <button class="btn-filter hidden" data-filter="ports" onclick="setFilter('ports')" id="fPorts">🔓 Has Open Ports</button>
+      <button class="btn-filter"        data-filter="fast"  onclick="setFilter('fast')" >⚡ Fast (&lt;10 ms)</button>
+    </div>
+
+  </div>
+
+  <!-- ── Results table ──────────────────────────────────────── -->
+  <div id="resultsSection" class="hidden">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>IP Address</th>
+            <th>Hostname</th>
+            <th>Status</th>
+            <th>Latency</th>
+            <th>Mode</th>
+            <th>Open Ports</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:11px; color:var(--muted); margin-top:9px; text-align:center;">
+      💡 Click any row to view detailed host information
+    </p>
+  </div>
+
+</main>
+
+<!-- ── Host Detail Modal ───────────────────────────────────── -->
+<div class="modal-overlay hidden" id="modalOverlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Host Details</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────
+  let currentMode   = 'icmp';
+  let currentFilter = 'all';
+  let allResults    = [];
+  let portScanDone  = false;
+
+  const modeHints = {
+    icmp: 'ICMP: Classic ping — fast and reliable on most networks.',
+    tcp:  'TCP: Connects to common ports (80/443/22). Works where ICMP is blocked.',
+    udp:  'UDP: Probes DNS/SNMP ports; ICMP port-unreachable responses reveal live hosts.',
+  };
+
+  // ── Mode selection ─────────────────────────────────────────
+  function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
+    document.getElementById('modeHint').textContent = modeHints[mode];
+  }
+
+  // ── Port-scan toggle ───────────────────────────────────────
+  function togglePortConfig() {
+    const on = document.getElementById('portToggle').checked;
+    document.getElementById('portConfig').classList.toggle('hidden', !on);
+  }
+
+  // ── Start sweep ────────────────────────────────────────────
+  async function startSweep() {
+    const network   = document.getElementById('networkInput').value.trim();
+    const portScan  = document.getElementById('portToggle').checked;
+    const portInput = document.getElementById('portInput').value.trim();
+
+    if (!network) {
+      alert('Please enter a network in CIDR format (e.g. 192.168.1.0/24).');
+      return;
+    }
+
+    allResults   = [];
+    portScanDone = false;
+    setStatus('scanning', `Scanning ${network} via ${currentMode.toUpperCase()}…`);
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('postScan').classList.add('hidden');
+    document.getElementById('resultsSection').classList.add('hidden');
+    document.getElementById('progressBar').classList.add('indeterminate');
+
+    try {
+      const res  = await fetch('/api/sweep', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ network, mode: currentMode, port_scan: portScan, ports: portInput || null }),
+      });
+      const data = await res.json();
+
+      document.getElementById('progressBar').classList.remove('indeterminate');
+
+      if (!res.ok) {
+        setStatus('error', data.error || 'Sweep failed.');
+        document.getElementById('startBtn').disabled = false;
         return;
       }
 
-      statusText.textContent = 'Sweeping network...';
-      table.style.display = 'none';
-      tbody.innerHTML = '';
+      allResults   = data.results;
+      portScanDone = data.results.some(r => r.port_scan_performed);
 
-      try {
-        const response = await fetch('/api/sweep', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ network })
-        });
+      renderStats(data.results);
+      document.getElementById('fPorts').classList.toggle('hidden', !portScanDone);
+      setFilter('all');
 
-        const data = await response.json();
+      const upCount = data.results.filter(r => r.status === 'Up').length;
+      setStatus('done', `Sweep complete — ${upCount} / ${data.results.length} hosts online on ${data.network}.`);
 
-        if (!response.ok) {
-          statusText.textContent = data.error || 'Sweep failed.';
-          return;
-        }
-
-        data.results.forEach(host => {
-          const tr = document.createElement('tr');
-          const badgeClass = host.status === 'Up' ? 'up' : 'down';
-          tr.innerHTML = `
-            <td>${host.ip}</td>
-            <td>${host.hostname || '—'}</td>
-            <td><span class="badge ${badgeClass}">${host.status.toUpperCase()}</span></td>
-            <td>${host.latency_ms !== null ? host.latency_ms + ' ms' : '—'}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        table.style.display = 'table';
-        statusText.textContent = `Sweep complete for ${data.network}.`;
-      } catch (error) {
-        statusText.textContent = 'Error connecting to backend.';
-      }
+    } catch (err) {
+      document.getElementById('progressBar').classList.remove('indeterminate');
+      setStatus('error', 'Could not reach the backend. Is the server running?');
     }
-  </script>
+
+    document.getElementById('startBtn').disabled = false;
+  }
+
+  // ── Status helper ──────────────────────────────────────────
+  function setStatus(state, msg) {
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot' + (state === 'scanning' ? ' scanning' : state === 'done' ? ' done' : state === 'error' ? ' error' : '');
+    document.getElementById('statusText').textContent = msg;
+  }
+
+  // ── Stats ──────────────────────────────────────────────────
+  function renderStats(results) {
+    const up   = results.filter(r => r.status === 'Up');
+    const lats = up.map(r => r.latency_ms).filter(v => v !== null);
+    const avg  = lats.length ? (lats.reduce((a,b)=>a+b,0)/lats.length).toFixed(1)+' ms' : '—';
+    const openCount = results.reduce((s,r) => s + (r.open_ports ? r.open_ports.length : 0), 0);
+
+    document.getElementById('sTotal').textContent = results.length;
+    document.getElementById('sUp').textContent    = up.length;
+    document.getElementById('sDown').textContent  = results.length - up.length;
+    document.getElementById('sAvg').textContent   = avg;
+    document.getElementById('sPorts').textContent = portScanDone ? openCount : '—';
+    document.getElementById('postScan').classList.remove('hidden');
+  }
+
+  // ── Filter ─────────────────────────────────────────────────
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-filter="${f}"]`).classList.add('active');
+
+    let rows = allResults;
+    if (f === 'up')    rows = allResults.filter(r => r.status === 'Up');
+    if (f === 'down')  rows = allResults.filter(r => r.status === 'Down');
+    if (f === 'ports') rows = allResults.filter(r => r.open_ports && r.open_ports.length > 0);
+    if (f === 'fast')  rows = allResults.filter(r => r.latency_ms !== null && r.latency_ms < 10);
+    renderTable(rows);
+  }
+
+  // ── Table ──────────────────────────────────────────────────
+  function renderTable(rows) {
+    const tbody = document.getElementById('resultsBody');
+    tbody.innerHTML = '';
+
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px;">No hosts match the current filter.</td></tr>';
+      document.getElementById('resultsSection').classList.remove('hidden');
+      return;
+    }
+
+    rows.forEach(h => {
+      const tr = document.createElement('tr');
+      tr.onclick = () => openModal(h);
+
+      const statusBadge = h.status === 'Up'
+        ? `<span class="badge b-up">▲ UP</span>`
+        : `<span class="badge b-down">▼ DOWN</span>`;
+
+      const modeKey  = (h.scan_method || 'icmp').toLowerCase();
+      const modeBadge = `<span class="badge b-${modeKey}">${h.scan_method}</span>`;
+
+      const latency = h.latency_ms !== null ? `${h.latency_ms} ms` : '—';
+
+      let portCell;
+      if (h.port_scan_performed) {
+        if (h.open_ports && h.open_ports.length) {
+          const chips = h.open_ports.slice(0,4).map(p=>`<span class="badge b-port">${p.port}</span>`).join('');
+          const extra = h.open_ports.length > 4 ? `<span class="badge b-port">+${h.open_ports.length-4}</span>` : '';
+          portCell = `<div class="port-chip-row">${chips}${extra}</div>`;
+        } else {
+          portCell = `<span style="color:var(--muted)">None</span>`;
+        }
+      } else {
+        portCell = `<span style="color:var(--subtle)">—</span>`;
+      }
+
+      tr.innerHTML = `
+        <td class="mono" style="color:var(--accent)">${h.ip}</td>
+        <td style="color:var(--muted)">${h.hostname || '<span style="color:var(--subtle)">—</span>'}</td>
+        <td>${statusBadge}</td>
+        <td class="mono">${latency}</td>
+        <td>${modeBadge}</td>
+        <td>${portCell}</td>
+        <td style="color:var(--muted);text-align:right;font-size:16px;">›</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('resultsSection').classList.remove('hidden');
+  }
+
+  // ── Modal ──────────────────────────────────────────────────
+  function openModal(h) {
+    document.getElementById('modalTitle').textContent = `Host: ${h.ip}`;
+
+    const statusColor = h.status === 'Up' ? 'var(--accent)' : '#f87171';
+    const modeColors  = { icmp: 'var(--accent)', tcp: 'var(--blue)', udp: 'var(--orange)' };
+    const modeColor   = modeColors[(h.scan_method||'icmp').toLowerCase()] || 'var(--accent)';
+
+    let portSection;
+    if (h.port_scan_performed) {
+      if (h.open_ports && h.open_ports.length) {
+        portSection = `
+          <p class="ports-heading">Open Ports (${h.open_ports.length})</p>
+          ${h.open_ports.map(p=>`
+            <div class="port-row">
+              <span class="port-num">${p.port}</span>
+              <span class="port-svc">${p.service}</span>
+              <span class="port-open">${p.state}</span>
+            </div>`).join('')}`;
+      } else {
+        portSection = `
+          <p class="ports-heading">Open Ports</p>
+          <div style="padding:16px;text-align:center;background:var(--surface);border-radius:var(--r-sm);color:var(--muted);">
+            No open ports found in the scanned range.
+          </div>`;
+      }
+    } else {
+      portSection = `
+        <p class="ports-heading">Port Scan</p>
+        <div style="padding:16px;text-align:center;background:var(--surface);border-radius:var(--r-sm);color:var(--muted);">
+          Port scan was not enabled for this sweep. Enable it in the configuration panel.
+        </div>`;
+    }
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-cell">
+          <div class="detail-cell-label">IP Address</div>
+          <div class="detail-cell-val mono" style="color:var(--accent)">${h.ip}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-label">Hostname</div>
+          <div class="detail-cell-val">${h.hostname || '<span style="color:var(--muted)">Not resolved</span>'}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-label">Status</div>
+          <div class="detail-cell-val" style="color:${statusColor}">
+            ${h.status === 'Up' ? '▲ ONLINE' : '▼ OFFLINE'}
+          </div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-label">Latency</div>
+          <div class="detail-cell-val mono">${h.latency_ms !== null ? h.latency_ms+' ms' : '—'}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-label">Scan Method</div>
+          <div class="detail-cell-val" style="color:${modeColor}">${h.scan_method}</div>
+        </div>
+        <div class="detail-cell">
+          <div class="detail-cell-label">Open Ports</div>
+          <div class="detail-cell-val">${h.port_scan_performed ? (h.open_ports ? h.open_ports.length : 0) : '—'}</div>
+        </div>
+      </div>
+      ${portSection}
+    `;
+
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  function overlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
 </body>
 </html>
