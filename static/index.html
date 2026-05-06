@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Network Ping Sweeper</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #111827;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.2);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    body {
+      font-family: "Fira Code", "Consolas", monospace;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 20px var(--accent-soft);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: var(--accent);
+      font-size: 24px;
+    }
+
+    p {
+      color: var(--muted);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 18px 0;
+    }
+
+    input {
+      flex: 1;
+      min-width: 220px;
+      background: #0f172a;
+      color: var(--text);
+      border: 1px solid var(--accent);
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #0b0f14;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
+
+    .status {
+      margin: 12px 0 0;
+      color: var(--muted);
+    }
+
+    table {
+      width: 100%;
+      margin-top: 16px;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+      padding: 10px;
+      text-align: left;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    .up {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent);
+    }
+
+    .down {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>&gt; Network Ping Sweeper</h1>
+    <p>Enter a CIDR network to sweep (e.g., <code>192.168.1.0/24</code>).</p>
+
+    <div class="input-row">
+      <input id="networkInput" placeholder="192.168.1.0/24" />
+      <button onclick="startSweep()">Start Sweep</button>
+    </div>
+
+    <p class="status" id="status">Waiting for input.</p>
+
+    <table id="resultsTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>IP Address</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+
+    <p class="note">Tip: ICMP may be blocked by firewalls. Try smaller ranges for faster demo results.</p>
+  </div>
+
+  <script>
+    async function startSweep() {
+      const network = document.getElementById('networkInput').value.trim();
+      const statusText = document.getElementById('status');
+      const table = document.getElementById('resultsTable');
+      const tbody = document.getElementById('resultsBody');
+
+      if (!network) {
+        alert('Please enter a network in CIDR format.');
+        return;
+      }
+
+      statusText.textContent = 'Sweeping network...';
+      table.style.display = 'none';
+      tbody.innerHTML = '';
+
+      try {
+        const response = await fetch('/api/sweep', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ network })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          statusText.textContent = data.error || 'Sweep failed.';
+          return;
+        }
+
+        data.results.forEach(host => {
+          const tr = document.createElement('tr');
+          const badgeClass = host.status === 'Up' ? 'up' : 'down';
+          tr.innerHTML = `
+            <td>${host.ip}</td>
+            <td><span class="badge ${badgeClass}">${host.status.toUpperCase()}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        table.style.display = 'table';
+        statusText.textContent = `Sweep complete for ${data.network}.`;
+      } catch (error) {
+        statusText.textContent = 'Error connecting to backend.';
+      }
+    }
+  </script>
+</body>
+</html>
