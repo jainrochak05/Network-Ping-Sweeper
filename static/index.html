@@ -456,7 +456,7 @@
       <div>
         <label class="field-label" for="networkInput">Target Network (CIDR)</label>
         <div class="network-row">
-          <input type="text" id="networkInput" placeholder="e.g. 192.168.1.0/24  or  1.1.1.1/32" />
+          <input type="text" id="networkInput" placeholder="e.g. 192.168.1.0/24 or 1.1.1.1/32" />
           <button class="btn-primary" id="startBtn" onclick="startSweep()">▶ Start Sweep</button>
         </div>
       </div>
@@ -577,6 +577,17 @@
   let allResults    = [];
   let portScanDone  = false;
 
+  // ── HTML escape helper (prevents XSS from DNS-returned hostnames) ──
+  function escHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   const modeHints = {
     icmp: 'ICMP: Classic ping — fast and reliable on most networks.',
     tcp:  'TCP: Connects to common ports (80/443/22). Works where ICMP is blocked.',
@@ -653,7 +664,8 @@
   // ── Status helper ──────────────────────────────────────────
   function setStatus(state, msg) {
     const dot = document.getElementById('statusDot');
-    dot.className = 'status-dot' + (state === 'scanning' ? ' scanning' : state === 'done' ? ' done' : state === 'error' ? ' error' : '');
+    const stateClass = { scanning: 'scanning', done: 'done', error: 'error' };
+    dot.className = 'status-dot' + (stateClass[state] ? ' ' + stateClass[state] : '');
     document.getElementById('statusText').textContent = msg;
   }
 
@@ -714,7 +726,7 @@
       if (h.port_scan_performed) {
         if (h.open_ports && h.open_ports.length) {
           const chips = h.open_ports.slice(0,4).map(p=>`<span class="badge b-port">${p.port}</span>`).join('');
-          const extra = h.open_ports.length > 4 ? `<span class="badge b-port">+${h.open_ports.length-4}</span>` : '';
+          const extra = h.open_ports.length > 4 ? `<span class="badge b-port">+${h.open_ports.length - 4}</span>` : '';
           portCell = `<div class="port-chip-row">${chips}${extra}</div>`;
         } else {
           portCell = `<span style="color:var(--muted)">None</span>`;
@@ -724,8 +736,8 @@
       }
 
       tr.innerHTML = `
-        <td class="mono" style="color:var(--accent)">${h.ip}</td>
-        <td style="color:var(--muted)">${h.hostname || '<span style="color:var(--subtle)">—</span>'}</td>
+        <td class="mono" style="color:var(--accent)">${escHtml(h.ip)}</td>
+        <td style="color:var(--muted)">${h.hostname ? escHtml(h.hostname) : '<span style="color:var(--subtle)">—</span>'}</td>
         <td>${statusBadge}</td>
         <td class="mono">${latency}</td>
         <td>${modeBadge}</td>
@@ -776,11 +788,11 @@
       <div class="detail-grid">
         <div class="detail-cell">
           <div class="detail-cell-label">IP Address</div>
-          <div class="detail-cell-val mono" style="color:var(--accent)">${h.ip}</div>
+          <div class="detail-cell-val mono" style="color:var(--accent)">${escHtml(h.ip)}</div>
         </div>
         <div class="detail-cell">
           <div class="detail-cell-label">Hostname</div>
-          <div class="detail-cell-val">${h.hostname || '<span style="color:var(--muted)">Not resolved</span>'}</div>
+          <div class="detail-cell-val">${h.hostname ? escHtml(h.hostname) : '<span style="color:var(--muted)">Not resolved</span>'}</div>
         </div>
         <div class="detail-cell">
           <div class="detail-cell-label">Status</div>
@@ -790,11 +802,11 @@
         </div>
         <div class="detail-cell">
           <div class="detail-cell-label">Latency</div>
-          <div class="detail-cell-val mono">${h.latency_ms !== null ? h.latency_ms+' ms' : '—'}</div>
+          <div class="detail-cell-val mono">${h.latency_ms !== null ? h.latency_ms + ' ms' : '—'}</div>
         </div>
         <div class="detail-cell">
           <div class="detail-cell-label">Scan Method</div>
-          <div class="detail-cell-val" style="color:${modeColor}">${h.scan_method}</div>
+          <div class="detail-cell-val" style="color:${modeColor}">${escHtml(h.scan_method)}</div>
         </div>
         <div class="detail-cell">
           <div class="detail-cell-label">Open Ports</div>

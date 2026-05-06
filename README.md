@@ -7,7 +7,7 @@ A network reconnaissance tool that performs ICMP/TCP/UDP ping sweeps over a CIDR
 - **Three scan modes** — ICMP ping, TCP connect probe, or UDP probe (choose independently)
 - **Port scanning** — scans 15 common ports by default; fully configurable with custom port lists
 - **Host detail view** — click any host row to open a detail panel showing IP, hostname, status, latency, scan method, and all open ports
-- **Result filtering** — filter by Up / Down / Has Open Ports / Fast (&lt;10 ms)
+- **Result filtering** — filter by Up / Down / Has Open Ports / Fast (<10 ms)
 - **Stats summary** — live counts for total, online, offline, average latency, and total open ports
 - **Concurrent scanning** — thread-pool based; UI stays responsive during scans
 - **Scan log** — every sweep is persisted to `scan_results.json` (never overwritten)

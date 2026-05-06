@@ -52,7 +52,8 @@ def tcp_ping(ip, timeout=1):
     """TCP connect probe to detect host liveness. Returns (is_up, latency_ms).
     Tries ports 80, 443, 22, 8080 in sequence; a successful connect or an
     ECONNREFUSED (port closed but host up) counts as 'Up'."""
-    # errno values for connection-refused across platforms
+    # errno values for connection-refused across platforms:
+    # 111 = ECONNREFUSED (Linux), 61 = ECONNREFUSED (macOS), 10061 = WSAECONNREFUSED (Windows)
     _conn_refused = {111, 61, 10061}
     test_ports = [80, 443, 22, 8080, 21, 25]
     for port in test_ports:
