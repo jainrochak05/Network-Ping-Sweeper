@@ -3,12 +3,21 @@ import subprocess
 import ipaddress
 import platform
 import concurrent.futures
+import socket
+import re
+import json
+import os
+import threading
+from datetime import datetime, timezone
 
 app = Flask(__name__, static_folder='static')
 
+SCAN_LOG_FILE = 'scan_results.json'
+_log_lock = threading.Lock()
+
 
 def ping_host(ip):
-    """Pings a single IP address and returns its status."""
+    """Pings a single IP address and returns enriched host details."""
     system = platform.system().lower()
     count_param = '-n' if system == 'windows' else '-c'
     timeout_param = '-w' if system == 'windows' else '-W'
@@ -16,13 +25,44 @@ def ping_host(ip):
 
     command = ['ping', count_param, '1', timeout_param, timeout_val, str(ip)]
 
+    host_info = {"ip": str(ip), "hostname": None, "status": "Down", "latency_ms": None}
+
     try:
-        output = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        host_info["hostname"] = socket.gethostbyaddr(str(ip))[0]
+    except (socket.herror, socket.gaierror):
+        host_info["hostname"] = None
+
+    try:
+        output = subprocess.run(
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
         if output.returncode == 0:
-            return {"ip": str(ip), "status": "Up"}
-        return {"ip": str(ip), "status": "Down"}
+            host_info["status"] = "Up"
+            # Parse RTT from ping output (works on Linux/macOS and Windows)
+            rtt_match = re.search(r'[=<]\s*([\d.]+)\s*ms', output.stdout)
+            if rtt_match:
+                host_info["latency_ms"] = round(float(rtt_match.group(1)), 2)
+        else:
+            host_info["status"] = "Down"
     except Exception:
-        return {"ip": str(ip), "status": "Error"}
+        host_info["status"] = "Error"
+
+    return host_info
+
+
+def append_scan_log(entry):
+    """Appends a scan entry to the local JSON log file without overwriting previous entries."""
+    with _log_lock:
+        log = []
+        if os.path.exists(SCAN_LOG_FILE):
+            try:
+                with open(SCAN_LOG_FILE, 'r') as f:
+                    log = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                log = []
+        log.append(entry)
+        with open(SCAN_LOG_FILE, 'w') as f:
+            json.dump(log, f, indent=2)
 
 
 @app.route('/')
@@ -53,6 +93,14 @@ def sweep():
             results.append(future.result())
 
     results = sorted(results, key=lambda x: ipaddress.IPv4Address(x['ip']))
+
+    scan_entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "network": target_network,
+        "results": results,
+    }
+    append_scan_log(scan_entry)
+
     return jsonify({"network": target_network, "results": results})
 
 
