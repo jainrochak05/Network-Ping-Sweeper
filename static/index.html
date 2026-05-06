@@ -131,7 +131,9 @@
       <thead>
         <tr>
           <th>IP Address</th>
+          <th>Hostname</th>
           <th>Status</th>
+          <th>Latency (ms)</th>
         </tr>
       </thead>
       <tbody id="resultsBody"></tbody>
@@ -175,7 +177,9 @@
           const badgeClass = host.status === 'Up' ? 'up' : 'down';
           tr.innerHTML = `
             <td>${host.ip}</td>
+            <td>${host.hostname || '—'}</td>
             <td><span class="badge ${badgeClass}">${host.status.toUpperCase()}</span></td>
+            <td>${host.latency_ms !== null ? host.latency_ms + ' ms' : '—'}</td>
           `;
           tbody.appendChild(tr);
         });
